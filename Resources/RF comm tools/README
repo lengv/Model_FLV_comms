@@ -1,0 +1,11 @@
+
+Using USB serial connection with ACP-220:
+	Install USB-TTL drivers from CP210x_VCP_Windows.zip
+
+Configuring ACP-220 using rfmagic:
+	Set rfmagic to compatibility mode using "Windows XP Service Pack (SP) 3"
+	Run in administrator mode
+	
+Troubleshooting:
+	Configuring on W7 requires EN pin CONNECTED
+	Running as serial device requires EN pin DISCONNECTED
