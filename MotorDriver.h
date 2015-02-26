@@ -19,6 +19,8 @@
 /* Baudrates for motordriver, requires configuration on board
    1 2 3 4 5 6 - switch numbers
    u d u u u u - configuration with switch up or down
+   Switch 6 d then slave select is activated
+   Switch 3 d then lithium cutoff enabled (for severly dischared battery safety)
 */
 //#define MOTOR_DRIVER_BAUDRATE 2400 // u d u u u u
 #define MOTOR_DRIVER_BAUDRATE 9600 // u d u d u u
