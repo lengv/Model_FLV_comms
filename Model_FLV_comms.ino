@@ -70,8 +70,8 @@ void setup() {
   
   //==== MOTOR DRIVER ====//
   // Make sure no command
-  sendSteerCommand(steer_command);
-  sendDriveCommand(drive_command);
+  //motorDrivers.sendSteerCommand(steer_command);
+  //motorDrivers.sendDriveCommand(drive_command);
   //======================//
   
   //==== MPU ====//
@@ -110,17 +110,17 @@ void loop() {
   rc_ch2 = rc_read_pulse(RC_PIN_CH2);
   rc_ch3 = rc_read_pulse(RC_PIN_CH3);
   
-  //print_channel(&Serial, rc_ch1, rc_ch2, rc_ch3);
+  print_channel(RF_serial, rc_ch1, rc_ch2, rc_ch3);
   //===============//
   
   dist_travelled = encoders.readDist();
   steeringAngle = encoders.readAngle();
   
   encoders.serialWriteVals(RF_serial);
-  Serial.println();
+  //Serial.println();
   
-  sendSteerCommand(steer_command);
-  sendDriveCommand(drive_command);
+  //motorDrivers.sendSteerCommand(steer_command);
+  //motorDrivers.sendDriveCommand(drive_command);
  
   delay(DELAY_T); // May not be necessary if there is more going on here
 }

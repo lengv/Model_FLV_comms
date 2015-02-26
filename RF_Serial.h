@@ -2,6 +2,9 @@
   RF serial wrapper
   Place holder for now in case anything more complicated is needed
 */
+#ifndef RC_H
+#define RC_H
+
 
 class RF_Serial
 {
@@ -23,3 +26,5 @@ class RF_Serial
     HardwareSerial *serial;
     
 };
+
+#endif //RF_SERIAL_H

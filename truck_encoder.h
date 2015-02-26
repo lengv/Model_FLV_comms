@@ -42,6 +42,7 @@ class Truck_Enc
     Truck_Enc()
       :enc_quadrature(ENC_QUAD_PIN_A,ENC_QUAD_PIN_B){
 		  // sets up quadrature pins
+      pinMode(ENC_ABS_PIN,INPUT);
     }
 
     long readEncQuad(void){
@@ -76,10 +77,5 @@ class Truck_Enc
     Encoder enc_quadrature;
     
 };
-
-void initEncPins(){
-  pinMode(ENC_ABS_PIN,INPUT);
-  // Note quadrature encoders pin modes are set up when class is constructed.
-}
 
 #endif
