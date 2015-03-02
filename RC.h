@@ -16,15 +16,15 @@
 
 // Max min values of RC signal - Not #def to allow online calibration (if necessary)
 int ch_min[3] = {1100, 1100, 1100};
-int ch_max[3] = {1500, 1500, 1500};
-int ch_range[3] = {400, 400, 400};
+int ch_max[3] = {1900, 1900, 1900};
+int ch_range[3] = {800, 800, 800};
 
 int command_min[3] = {0, DRIVE_FR, STEER_FR};
 int command_max[3] = {0, DRIVE_FF, STEER_FF};
 int command_range[3] = {0, DRIVE_RANGE, STEER_RANGE};
 
-#define CH_DRIVE = 2;
-#define CH_STEER = 3;
+#define CH_DRIVE 2-1
+#define CH_STEER 3-1
 
 // 
 int rc_read_pulse(int pin)
@@ -38,12 +38,15 @@ int rc_read_pulse(int pin)
  ** channel  - use CH_DRIVE/CH_STEER
  ** returns command value rounded as char
  **/
-char pulse_to_command(int pulseVal, int channel)
+unsigned char pulse_to_command(int pulseVal, int channel)
 {
+  if(pulseVal == 0){
+    return 0;
+  }
   float commandVal;
-  char roundedCommandVal;
+  unsigned char roundedCommandVal;
   
-  commandVal = (float(pulseVal-ch_min[channel-1]) / ch_range[channel-1])*command_min[channel-1] + command_range[channel-1];
+  commandVal = ((float(pulseVal-ch_min[channel]) / ch_range[channel])*(float (command_range[channel]))) + command_min[channel];
   
   roundedCommandVal = char(round(commandVal));
   return roundedCommandVal;

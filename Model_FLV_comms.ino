@@ -36,9 +36,7 @@ float* mpu_orien;
 short* mpu_acl;
 
 //==== RC_PWM ====//
-int rc_ch1; // Here's where we'll keep our channel values
-int rc_ch2;
-int rc_ch3;
+int rc_command[3] = {0,0,0};                // Use CH_DRIVE and CH_STEER
 
 //==== ENCODER ====//
 Truck_Enc encoders;
@@ -48,8 +46,8 @@ int steeringAngle = 0;
 
 //==== MOTOR DRIVERS ====//
 Motor_Driver motorDrivers(&Serial2,&Serial3);
-char drive_command = 0;
-char steer_command = 0;
+unsigned char drive_command = 0;
+unsigned char steer_command = 0;
 
 //==== RF ====//
 HardwareSerial *RF_serial = &Serial1;
@@ -66,6 +64,8 @@ void setup() {
   // initialize serial communication at 9600 bits per second:
   Serial.begin(BAUDRATE);
   Serial1.begin(BAUDRATE);
+  Serial2.begin(2400);
+  Serial3.begin(2400);
   Wire.begin(); //I2C
   
   //==== MOTOR DRIVER ====//
@@ -75,17 +75,17 @@ void setup() {
   //======================//
   
   //==== MPU ====//
-  // Only necessary if using multiple IMU
-  MPU.selectDevice(DEVICE_TO_USE); 
-  // Start MPU
-  MPU.init(MPU_UPDATE_RATE, MPU_MAG_MIX_GYRO_AND_MAG,
-  MAG_UPDATE_RATE, MPU_LPF_RATE);
+//  // Only necessary if using multiple IMU
+//  MPU.selectDevice(DEVICE_TO_USE); 
+//  // Start MPU
+//  MPU.init(MPU_UPDATE_RATE, MPU_MAG_MIX_GYRO_AND_MAG,
+//  MAG_UPDATE_RATE, MPU_LPF_RATE);
   //=============//
   
   //==== RC_PWM ====//
-  pinMode(rc_ch1, INPUT); // Set our input pins as such
-  pinMode(rc_ch2, INPUT);
-  pinMode(rc_ch3, INPUT);
+  pinMode(RC_PIN_CH1, INPUT); // Set our input pins as such
+  pinMode(RC_PIN_CH2, INPUT);
+  pinMode(RC_PIN_CH3, INPUT);
   //===============//
   
 }
@@ -94,33 +94,82 @@ void setup() {
 void loop() {
   
   //==== MPU ====//
-  if (MPU.read()) {                                   // get the latest data if ready yet
-    mpu_orien = MPU.m_fusedEulerPose;
-    mpu_acl = MPU.m_calAccel;
-  }
+//  if (MPU.read()) {                                   // get the latest data if ready yet
+//    mpu_orien = MPU.m_fusedEulerPose;
+//    mpu_acl = MPU.m_calAccel;
+//  }
   
-  writeAngle(RF_serial,mpu_orien);
-  writeAccl(RF_serial,mpu_acl);
+  //writeAngle(RF_serial,mpu_orien);
+  //writeAccl(RF_serial,mpu_acl);
   
   //MPU.printVector(MPU.m_calAccel);
   //=============//
   
   //==== RC_PWM ====//
-  rc_ch1 = rc_read_pulse(RC_PIN_CH1);
-  rc_ch2 = rc_read_pulse(RC_PIN_CH2);
-  rc_ch3 = rc_read_pulse(RC_PIN_CH3);
+  rc_command[0] = rc_read_pulse(RC_PIN_CH1);
+  rc_command[CH_DRIVE] = rc_read_pulse(RC_PIN_CH2);
+  rc_command[CH_STEER] = rc_read_pulse(RC_PIN_CH3);
   
-  print_channel(RF_serial, rc_ch1, rc_ch2, rc_ch3);
+  print_channel(&Serial, rc_command[0], rc_command[CH_DRIVE], rc_command[CH_STEER]);
   //===============//
   
-  dist_travelled = encoders.readDist();
-  steeringAngle = encoders.readAngle();
+  drive_command = pulse_to_command(rc_command[CH_DRIVE],CH_DRIVE);
+  steer_command = pulse_to_command(rc_command[CH_STEER],CH_STEER);
   
-  encoders.serialWriteVals(RF_serial);
+  Serial.print("\nCommand:");Serial.print(int(drive_command));Serial.print(", ");Serial.println(int(steer_command));
+  
+  motorDrivers.sendDriveCommand(drive_command);
+  motorDrivers.sendSteerCommand(steer_command);
+  
+  //dist_travelled = encoders.readDist();
+  //steeringAngle = encoders.readAngle();
+  
+  //encoders.serialWriteVals(RF_serial);
   //Serial.println();
   
   //motorDrivers.sendSteerCommand(steer_command);
   //motorDrivers.sendDriveCommand(drive_command);
+  
+//  unsigned char m1b = 30;
+//  unsigned char m1n = 64;
+//  unsigned char m1f = 127;
+//  
+//  unsigned char m2b = 30+127;
+//  unsigned char m2n = 64+127;
+//  unsigned char m2f = 127+127;
+//  
+//  motorDrivers.sendDriveCommand(m2b);
+//  delay(3000);
+//  motorDrivers.sendDriveCommand(m2n);
+//  delay(3000);
+//  motorDrivers.sendDriveCommand(m2f);
+//  delay(3000);
+//  motorDrivers.sendSteerCommand(m1b);
+//  delay(3000);
+//  motorDrivers.sendSteerCommand(m1n);
+//  delay(3000);
+//  motorDrivers.sendSteerCommand(m1f);
+//  delay(3000);
+  
+  
+//  Serial2.write(m1b);
+//  Serial.print("Back M1");Serial.write(m1b);Serial.println();
+//  delay(3000);
+//  Serial2.write(m1n);
+//  Serial.print("Neut M1");Serial.write(m1n);Serial.println();
+//  delay(3000);
+//  Serial2.write(m1f);
+//  Serial.print("Forw M1");Serial.write(m1f);Serial.println();
+//  delay(3000);
+//  Serial2.write(m2b);
+//  Serial.print("Back M2");Serial.write(m2b);Serial.println();
+//  delay(3000);
+//  Serial2.write(m2n);
+//  Serial.print("Neut M2");Serial.write(m2n);Serial.println();
+//  delay(3000);
+//  Serial2.write(m2f);
+//  Serial.print("Forw M2");Serial.write(m2f);Serial.println();
+//  delay(3000);
  
   delay(DELAY_T); // May not be necessary if there is more going on here
 }

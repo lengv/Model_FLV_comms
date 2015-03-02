@@ -4,17 +4,17 @@
 #ifndef MOTOR_DRIVER_H
 #define MOTOR_DRIVER_H
 
-#define DRIVE_FR 1
-#define DRIVE_ZR 64
-#define DRIVE_FF 127
+#define STEER_FR 1
+#define STEER_ZR 64
+#define STEER_FF 127
 
-#define STEER_FR 128
-#define STEER_ZR 192
-#define STEER_FF 255
+#define DRIVE_FR 128
+#define DRIVE_ZR 192
+#define DRIVE_FF 255
 
 // Note extra bit is used for kill motors
-#define DRIVE_RANGE 127
-#define STEER_RANGE 128
+#define DRIVE_RANGE 128
+#define STEER_RANGE 127
 
 /* Baudrates for motordriver, requires configuration on board
    1 2 3 4 5 6 - switch numbers
@@ -36,17 +36,17 @@ class Motor_Driver
       steer = _steer;
     }
   
-    void sendDriveCommand(char input){
-      drive->write(char(input));
+    void sendDriveCommand(unsigned char input){
+      drive->write((input));
     }
     
-    void sendSteerCommand(char input){
-      steer->write(char(input));
+    void sendSteerCommand(unsigned char input){
+      steer->write((input));
     }
     
-    void sendCommand(char drive_in, char steer_in){
-      drive->write(char(drive_in));
-      steer->write(char(steer_in));
+    void sendCommand(unsigned char drive_in, unsigned char steer_in){
+      drive->write((drive_in));
+      steer->write((steer_in));
     }
     
     void killAll()
