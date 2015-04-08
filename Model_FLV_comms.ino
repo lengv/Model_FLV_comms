@@ -4,6 +4,7 @@
  */
 
 #define DEBUG_ON
+//#define WIFI_ON
 #include <String.h>
 
 // Communication
@@ -91,6 +92,8 @@ unsigned long timer;
 
 String data_line; // Accumulator
 
+int wifi_count=0;
+
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #endif
@@ -138,22 +141,25 @@ void setup() {
   pinMode(RC_PIN_CH3, INPUT);
   //===============//
   //==== WIFI ====//
-  if (WiFi.status() == WL_NO_SHIELD) {
-    Serial.println("WiFi shield not present");
-    // don't continue:
-    while (true);
-  }
-  while ( status != WL_CONNECTED) {
-    Serial.print("Attempting to connect to SSID: ");
-    Serial.println(ssid);
-    // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
-    status = WiFi.begin(ssid);
-
-    // wait for connection:
-    delay(500);
-  }
-  server.begin();
-  printWifiStatus();
+  #ifdef WIFI_ON
+    if (WiFi.status() == WL_NO_SHIELD) {
+      Serial.println("WiFi shield not present");
+      // don't continue:
+      while (true);
+    }
+    while ( status != WL_CONNECTED && wifi_count <1 ) {
+      Serial.print("Attempting to connect to SSID: ");
+      Serial.println(ssid);
+      // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
+      status = WiFi.begin(ssid);
+  
+      // wait for connection:
+      delay(100);
+      wifi_count++;
+    }
+    server.begin();
+    printWifiStatus();
+  #endif
   //===============//
 
   // Reserve some space for the string
@@ -173,8 +179,11 @@ void setup() {
 
 /*=================================Start Main Loop====================================================*/
 void loop() {
-  WiFiClient client = server.available();
-
+  
+  #ifdef WIFI_ON
+    WiFiClient client = server.available();
+  #endif
+  
   //Serial.println("1");
   timer = millis();
   //Serial.println("2");
@@ -332,18 +341,21 @@ void loop() {
     data_line += ",";
     data_line += MPU.m_rawGyro[VEC3_Z];
     data_line += "]\n";
-  if (client.connected()) {
-//    client.print('['); client.print(timer); client.print(']');
-//    writeAngle(&client, mpu_orien);
-//    writeAccl(&client, mpu_acl);
-//    encoders.serialWriteVals(&client);
-//    client.println();
-
     
-    //Serial.println("Sending data");
-    client.print(data_line);
+    #ifdef WIFI_ON
+      if (client.connected()) {
+    //    client.print('['); client.print(timer); client.print(']');
+    //    writeAngle(&client, mpu_orien);
+    //    writeAccl(&client, mpu_acl);
+    //    encoders.serialWriteVals(&client);
+    //    client.println();
     
-  }
+        
+        //Serial.println("Sending data");
+        client.print(data_line);
+        
+      }
+    #endif
   //encoders.serialWriteRaw(&Serial);
   Serial.print(data_line);
   
