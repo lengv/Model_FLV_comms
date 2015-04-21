@@ -19,9 +19,9 @@
 #define RC_DRIVE_PIN RC_PIN_CH3
 
 // Max min values of RC signal - Not #def to allow online calibration (if necessary)
-int ch_min[3] = {1100, 1121, 1112};
-int ch_max[3] = {1900, 1778, 1786};
-int ch_range[3] = {800, 657, 674};
+int ch_min[3] = {1100, 1213, 1180};
+int ch_max[3] = {1900, 1847, 1853};
+int ch_range[3] = {800, 634, 673};
 
 //int command_min[3] = {0, DRIVE_FR, STEER_FR};
 //int command_max[3] = {0, DRIVE_FF, STEER_FF};

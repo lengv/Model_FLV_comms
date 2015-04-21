@@ -4,7 +4,7 @@
  */
 
 #define DEBUG_ON
-//#define WIFI_ON
+#define WIFI_ON
 #include <String.h>
 
 // Communication
@@ -60,7 +60,7 @@ float dist_travelled = 0;
 float steeringAngle = 0;
 
 //==== MOTOR DRIVERS ====//
-Motor_Driver motorDrivers(&Serial3, &Serial2);
+Motor_Driver motorDrivers(&Serial2, &Serial3);
 unsigned char drive_command = 0;
 unsigned char steer_command = 0;
 unsigned char tmp_drive_command = 0;
@@ -276,10 +276,10 @@ void loop() {
 
   // Prevent wheel from turning too far, allowing rotation in opposite direction
   // Note: that if the angular velocity is high the wheel may go beyond the bound
-  if (steeringAngle <= PI && steeringAngle >= PI_ON_2 && steer_command > STEER_ZR) {
+  if (steeringAngle <= PI && steeringAngle >= PI_ON_2 && steer_command < STEER_ZR) {
     steer_command = STEER_ZR;
     //Serial.println("Not sending steering1");
-  } else if (steeringAngle <= PI_ON_2_3 && steeringAngle > PI && steer_command < STEER_ZR) {
+  } else if (steeringAngle <= PI_ON_2_3 && steeringAngle > PI && steer_command > STEER_ZR) {
     steer_command = STEER_ZR;
     //Serial.println("Not sending steering2");
   }

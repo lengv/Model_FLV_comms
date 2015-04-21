@@ -4,13 +4,13 @@
 #ifndef MOTOR_DRIVER_H
 #define MOTOR_DRIVER_H
 
-#define STEER_FR 16
-#define STEER_ZR 64
-#define STEER_FF 110
-
-#define DRIVE_FR 143
-#define DRIVE_ZR 192
-#define DRIVE_FF 239
+//#define STEER_FR 16
+//#define STEER_ZR 64
+//#define STEER_FF 110
+//
+//#define DRIVE_FR 143
+//#define DRIVE_ZR 192
+//#define DRIVE_FF 239
 
 //#define DRIVE_FR 1
 //#define DRIVE_ZR 64
@@ -20,13 +20,13 @@
 //#define STEER_ZR 192
 //#define STEER_FF 254
 
-//#define DRIVE_FR 5
-//#define DRIVE_ZR 64
-//#define DRIVE_FF 122
-//
-//#define STEER_FR 132
-//#define STEER_ZR 192
-//#define STEER_FF 250
+#define STEER_FR 5
+#define STEER_ZR 64
+#define STEER_FF 122
+
+#define DRIVE_FR 132
+#define DRIVE_ZR 192
+#define DRIVE_FF 250
 
 // Note extra bit is used for kill motors
 #define DRIVE_RANGE 127
