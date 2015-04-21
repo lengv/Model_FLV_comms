@@ -1,9 +1,9 @@
 %% Reads files saved by connect_to_flv_tcpip.m
 
-filename = '[2015-03-19][14-11-00]Stop_test1'; % Choose appropriate file
+filename = '[2015-04-21][15-33-56]Test1'; % Choose appropriate file
 ext = 'data';
 
-fid = fopen(strcat(filename,'.',ext,'r')); % Open in read only mode
+fid = fopen(strcat(filename,'.',ext),'r'); % Open in read only mode
 
 % Get data
 data = fscanf(fid,'[%d][o:%f,%f,%f][a:%f,%f,%f][e:%f,%f][c:%d,%d][w:%d,%d,%d]\n',[14, inf]);
