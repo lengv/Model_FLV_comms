@@ -1,6 +1,6 @@
 %% Reads files saved by connect_to_flv_tcpip.m
 
-filename = '[2015-04-21][15-33-56]Test1'; % Choose appropriate file
+filename = '[2015-04-24][09-37-50]Test1'; % Choose appropriate file
 ext = 'data';
 
 fid = fopen(strcat(filename,'.',ext),'r'); % Open in read only mode
@@ -92,3 +92,11 @@ ylabel('Command Signal');
 line([time(1),time(end)],[64,64],'Color',[0,0,0]);
 line([time(1),time(end)],[192,192],'Color',[0,0,0]);
 hold off
+%%
+figure()
+time_diff  =  data(ind_time,2:end) - data(ind_time,1:end-1);
+title_str = sprintf('Time between samples. mean: %f, std: %f', mean(time_diff), std(time_diff));
+
+plot(time_diff);
+axis([0 length(time_diff) 0 300]);
+title(title_str);

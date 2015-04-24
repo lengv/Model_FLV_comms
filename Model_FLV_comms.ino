@@ -4,7 +4,8 @@
  */
 
 #define DEBUG_ON
-#define WIFI_ON
+//#define WIFI_ON
+#define RF_ON
 #include <String.h>
 
 // Communication
@@ -37,8 +38,8 @@
 
 /*=================================Defines and Globals===============================================*/
 //==== CONTROL DEFINES - Comment out if not connected
-#define MPU_ON
-#define MOTORS_ON
+//#define MPU_ON
+//#define MOTORS_ON
 
 //==== MPU ====//
 #define DEVICE_TO_USE    0
@@ -85,7 +86,7 @@ WiFiServer server(web_);
 unsigned long timer;
 
 //  BAUDRATE defines the speed to use for the debug serial port. Note: if this is changed, the RF comm (ACP-220) must be reprogrammed
-#define  BAUDRATE  57600
+#define  BAUDRATE  19200
 
 // Delay time to allow RF to work
 #define DELAY_T 10 //ms
@@ -242,7 +243,7 @@ void loop() {
     drive_command = pulse_to_command(rc_command[CH_DRIVE], CH_DRIVE);
     steer_command = pulse_to_command(rc_command[CH_STEER], CH_STEER);
   } else {
-    Serial.println("no input");
+    Serial.println("no RC input");
     if (RF_serial->available() == 2) {
       drive_command = RF_serial->read();
       steer_command = RF_serial->read();
@@ -261,7 +262,7 @@ void loop() {
   //Serial.println("5");
 
   // Read values
-  encoders.readEnc();
+  //encoders.readEnc();
 
   // Get values from object
   dist_travelled = encoders.getDist();
@@ -356,8 +357,14 @@ void loop() {
         
       }
     #endif
+    
+    #ifdef RF_ON
+      RF_serial->print(data_line);
+    #endif //RF_ON
+    
   //encoders.serialWriteRaw(&Serial);
   Serial.print(data_line);
+
   
 //  RF_serial->println();
   Serial.println();

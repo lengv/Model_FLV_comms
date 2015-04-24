@@ -5,7 +5,8 @@ function connect_to_flv(protocol,varargin)
         if nargin == 1
             % defaults
             port = 'COM6';
-            baudrate = '9600';
+            baudrate = '19200';
+            
         elseif nargin == 2
             port = varargin{1};
         elseif nargin == 3
@@ -14,7 +15,12 @@ function connect_to_flv(protocol,varargin)
         else
             error('Incorrect number of arguments. Only 0, 1 (port), 2 (port, baudrate) arguments. Default values: port = COM6; baudrate = 9600.');
         end
-        
+            connection = serial('com6');
+            
+            set(connection, 'DataBits', 8);
+            set(connection, 'StopBits', 1);
+            set(connection, 'BaudRate', 19200);
+            set(connection, 'Parity', 'none');
     elseif strcmpi('tcpip',protocol)
         
         if nargin == 1
@@ -59,16 +65,40 @@ function connect_to_flv(protocol,varargin)
 
     %% Main reading loop
     disp('Beginning reading loop');
-    while(1) % NOTE: Need to find a way to send an exit command (catch interrupt would be best) at the moment we use ctrl+C to exit
-        while(get(connection,'BytesAvailable') > 0)
-            if(strcmp(connection.status,'open')) % check if connection is still open
-                data = fread(connection,connection.BytesAvailable);
-                fprintf('%s',data); % Write to display - this can be turned off
-                fprintf(data_file,'%s', data); % Write to file
-            else
-                disp('Connection lost, exiting now.'); % Can replace with reasquisition
-                break;
+    if(strcmpi('tcpip',protocol))
+        while(1) % NOTE: Need to find a way to send an exit command (catch interrupt would be best) at the moment we use ctrl+C to exit
+            while(get(connection,'BytesAvailable') > 0)
+                if(strcmp(connection.status,'open')) % check if connection is still open
+                    data = fread(connection,connection.BytesAvailable);
+                    fprintf('%s',data); % Write to display - this can be turned off
+                    fprintf(data_file,'%s', data); % Write to file
+                else
+                    disp('Connection lost, exiting now.'); % Can replace with reasquisition
+                    break;
+                end
             end
         end
+    elseif(strcmpi('serial',protocol))
+        count = 1;
+        d_buffer  = zeros(1,512);
+        d_zero = d_buffer;
+        while(strcmp(connection.status,'open'))
+            data = fread(connection,1,'uchar');
+            %fprintf('%c',char(data));
+            if( (data) ~= 93 )
+                %d_buffer = d_buffer * 10;
+                d_buffer(count) = char(data);
+                count = count+1;
+            else
+                %val = sum(d_buffer);
+                d_buffer(count) = char(data);
+                fprintf('%s',(d_buffer));
+                fprintf(data_file,'%s', d_buffer(1:count)); % Write to file  
+                count = 1;
+                d_buffer = d_zero;
+            end
+        end;
+        disp('Connection lost, exiting now.'); % Can replace with reasquisition
+        
     end
 end
