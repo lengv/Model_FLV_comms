@@ -2,10 +2,15 @@
   Created: 2015-02-15 [yyyy-mm-dd]
 
  */
-
+ 
+//==== CONTROL DEFINES - Comment out if not connected
+#define MPU_ON
+#define MOTORS_ON
 #define DEBUG_ON
 //#define WIFI_ON
 #define RF_ON
+
+
 #include <String.h>
 
 // Communication
@@ -37,9 +42,7 @@
 #include "MotorDriver.h"
 
 /*=================================Defines and Globals===============================================*/
-//==== CONTROL DEFINES - Comment out if not connected
-//#define MPU_ON
-//#define MOTORS_ON
+
 
 //==== MPU ====//
 #define DEVICE_TO_USE    0
@@ -61,7 +64,7 @@ float dist_travelled = 0;
 float steeringAngle = 0;
 
 //==== MOTOR DRIVERS ====//
-Motor_Driver motorDrivers(&Serial2, &Serial3);
+Motor_Driver motorDrivers(&Serial2, &Serial2);
 unsigned char drive_command = 0;
 unsigned char steer_command = 0;
 unsigned char tmp_drive_command = 0;
@@ -262,7 +265,7 @@ void loop() {
   //Serial.println("5");
 
   // Read values
-  //encoders.readEnc();
+  encoders.readEnc();
 
   // Get values from object
   dist_travelled = encoders.getDist();
@@ -277,10 +280,10 @@ void loop() {
 
   // Prevent wheel from turning too far, allowing rotation in opposite direction
   // Note: that if the angular velocity is high the wheel may go beyond the bound
-  if (steeringAngle <= PI && steeringAngle >= PI_ON_2 && steer_command < STEER_ZR) {
+  if (steeringAngle <= PI && steeringAngle >= PI_ON_2 && steer_command > STEER_ZR) {
     steer_command = STEER_ZR;
     //Serial.println("Not sending steering1");
-  } else if (steeringAngle <= PI_ON_2_3 && steeringAngle > PI && steer_command > STEER_ZR) {
+  } else if (steeringAngle <= PI_ON_2_3 && steeringAngle > PI && steer_command < STEER_ZR) {
     steer_command = STEER_ZR;
     //Serial.println("Not sending steering2");
   }

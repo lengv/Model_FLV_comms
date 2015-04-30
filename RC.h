@@ -31,6 +31,7 @@ int command_min[3] = {0, STEER_FR, DRIVE_FR};
 int command_max[3] = {0, STEER_FF, DRIVE_FF};
 int command_range[3] = {0, STEER_RANGE, DRIVE_RANGE};
 
+// Actually using channels 1 and 3 but haven't updated these defiens
 #define CH_DRIVE 3-1
 #define CH_STEER 2-1
 
