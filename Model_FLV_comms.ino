@@ -9,6 +9,7 @@
 #define DEBUG_ON
 //#define WIFI_ON
 #define RF_ON
+#define ENC_ON
 
 
 #include <String.h>
@@ -40,6 +41,10 @@
 
 // Motor Driver
 #include "MotorDriver.h"
+
+// Load sensor
+#include <HX711.h>
+#include "load_sensor.h"
 
 /*=================================Defines and Globals===============================================*/
 
@@ -73,6 +78,15 @@ unsigned char tmp_steer_command = 0;
 //==== RF ====//
 HardwareSerial *RF_serial = &Serial1;
 
+//==== Load Sensor ====//
+HX711 load_right(22,23); // Right load sensor
+HX711 load_left(24,25); // Left load sensor
+HX711 load_rear(26,27); // Rear load sensor
+
+long mass_right = 0;
+long mass_left = 0;
+long mass_rear = 0;
+
 //==== WIFI ====//
 char ssid[] = "4360D-114771-M";      // your network SSID (name)
 
@@ -98,6 +112,7 @@ String data_line; // Accumulator
 
 int wifi_count=0;
 
+// For deactivating internal pull-ups 
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #endif
@@ -165,7 +180,7 @@ void setup() {
     printWifiStatus();
   #endif
   //===============//
-
+  init_load_sensors(&load_right, &load_left, &load_rear);
   // Reserve some space for the string
   data_line.reserve(100);
 }
@@ -205,32 +220,6 @@ void loop() {
 //    mpu_set_accel_fsr(MPU_ACCL_FSR);
     Serial.println("no IMU");
   }
-  //Serial.println("3");
-  //  if(_count > _skip){
-  //    if(mpu_acl[VEC3_X] < minX) {minX=mpu_acl[VEC3_X];change = 1;}
-  //    if(mpu_acl[VEC3_X] > maxX) {maxX=mpu_acl[VEC3_X];change = 1;}
-  //    if(mpu_acl[VEC3_Y] < minY) {minY=mpu_acl[VEC3_Y];change = 1;}
-  //    if(mpu_acl[VEC3_Y] > maxY) {maxY=mpu_acl[VEC3_Y];change = 1;}
-  //    if(mpu_acl[VEC3_Z] < minZ) {minZ=mpu_acl[VEC3_Z];change = 1;}
-  //    if(mpu_acl[VEC3_Z] > maxZ) {maxZ=mpu_acl[VEC3_Z];change = 1;}
-  //  }
-
-
-  //  if(_count < _skip + 2){
-  //  _count++;
-  //    writeAngle(&Serial,mpu_orien);
-  //    writeAccl(&Serial,mpu_acl);
-  //    Serial.println();
-  //  }
-  //
-  //  if(change){
-  //    Serial.print("X:");Serial.print(minX);Serial.print(',');Serial.print(maxX);
-  //    Serial.print(",Y:");Serial.print(minY);Serial.print(',');Serial.print(maxY);
-  //    Serial.print(",Z:");Serial.print(minZ);Serial.print(',');Serial.print(maxZ);
-  //    Serial.println();
-  //    change = 0;
-  //  }
-  //MPU.printVector(MPU.m_calAccel);
   //=============//
 
   //==== RC_PWM ====//
@@ -262,7 +251,6 @@ void loop() {
     steer_command = RF_serial->read();
     Serial.println("from MATLAB");
   }
-  //Serial.println("5");
 
   // Read values
   encoders.readEnc();
@@ -271,109 +259,98 @@ void loop() {
   dist_travelled = encoders.getDist();
   steeringAngle = encoders.getAngle();
 
-  //Serial.print("[Pulse:"); Serial.print(encoders.getEncAbs()); Serial.println(']');
-  //Serial.println("6");
-
   // Drive command section
-#ifdef MOTORS_ON
-  motorDrivers.sendDriveCommand(drive_command);
-
-  // Prevent wheel from turning too far, allowing rotation in opposite direction
-  // Note: that if the angular velocity is high the wheel may go beyond the bound
-  if (steeringAngle <= PI && steeringAngle >= PI_ON_2 && steer_command > STEER_ZR) {
-    steer_command = STEER_ZR;
-    //Serial.println("Not sending steering1");
-  } else if (steeringAngle <= PI_ON_2_3 && steeringAngle > PI && steer_command < STEER_ZR) {
-    steer_command = STEER_ZR;
-    //Serial.println("Not sending steering2");
-  }
-
-  // Force steer angle to zero
-  // TODO
-
-  //steer_command = pulse_to_position_command(rc_command[CH_STEER], steeringAngle,CH_STEER);
-
-  motorDrivers.sendSteerCommand(steer_command);
-
-#endif // MOTORS_ON
-  //Serial.println("7");
-
-  //Serial.print('['); Serial.print(timer); Serial.print(']');
-  //RF_serial->print('[');RF_serial->print(timer);RF_serial->print(']');
-  //encoders.serialWriteVals(RF_serial);
-  //encoders.serialWriteVals(&Serial);
-  //RF_serial->print("[Command:");RF_serial->print(drive_command);RF_serial->print(','); RF_serial->print(steer_command);RF_serial->print(']');
-//  Serial.println(); Serial.print("Command:"); Serial.print(drive_command); Serial.print(','); Serial.println(steer_command);
-//  writeAngle(RF_serial, mpu_orien);
-//  writeAccl(RF_serial, mpu_acl);
-//
-//  writeAngle(&Serial, mpu_orien);
-//  writeAccl(&Serial, mpu_acl);
-  //writeAcclVal(&Serial,mpu_acl);
-    data_line = "";
-    data_line += "[";
-    data_line += timer;
-    data_line += "]";
-    data_line += "[o:";
-    data_line += mpu_orien[VEC3_X] * RAD_TO_DEGREE;
-    data_line += ",";
-    data_line += mpu_orien[VEC3_Y] * RAD_TO_DEGREE;
-    data_line += ",";
-    data_line += mpu_orien[VEC3_Z] * RAD_TO_DEGREE;
-    data_line += "]";
-    data_line += "[a:";
-    data_line += mpu_acl[VEC3_X] * ACCL_G_PER_VAL_X * GRAVITY;
-    data_line += ",";
-    data_line += mpu_acl[VEC3_Y] * ACCL_G_PER_VAL_Y * GRAVITY;
-    data_line += ",";
-    data_line += mpu_acl[VEC3_Z] * ACCL_G_PER_VAL_Z * GRAVITY;
-    data_line += "]";
-    data_line += "[e:";
-    data_line += dist_travelled;
-    data_line += ",";
-    data_line += steeringAngle;
-    data_line += "]";
-    data_line += "[c:";
-    data_line += drive_command;
-    data_line += ",";
-    data_line += steer_command;
-    data_line += "]";
-    data_line += "[w:";
-    data_line += MPU.m_rawGyro[VEC3_X];
-    data_line += ",";
-    data_line += MPU.m_rawGyro[VEC3_Y];
-    data_line += ",";
-    data_line += MPU.m_rawGyro[VEC3_Z];
-    data_line += "]\n";
-    
-    #ifdef WIFI_ON
-      if (client.connected()) {
-    //    client.print('['); client.print(timer); client.print(']');
-    //    writeAngle(&client, mpu_orien);
-    //    writeAccl(&client, mpu_acl);
-    //    encoders.serialWriteVals(&client);
-    //    client.println();
-    
-        
-        //Serial.println("Sending data");
-        client.print(data_line);
-        
-      }
-    #endif
-    
-    #ifdef RF_ON
-      RF_serial->print(data_line);
-    #endif //RF_ON
-    
-  //encoders.serialWriteRaw(&Serial);
-  Serial.print(data_line);
-
+  #ifdef MOTORS_ON
+    motorDrivers.sendDriveCommand(drive_command);
   
-//  RF_serial->println();
-  Serial.println();
+    // Prevent wheel from turning too far, allowing rotation in opposite direction
+    // Note: that if the angular velocity is high the wheel may go beyond the bound
+    if (steeringAngle <= PI && steeringAngle >= PI_ON_2 && steer_command > STEER_ZR) {
+      steer_command = STEER_ZR;
+      //Serial.println("Not sending steering1");
+    } else if (steeringAngle <= PI_ON_2_3 && steeringAngle > PI && steer_command < STEER_ZR) {
+      steer_command = STEER_ZR;
+      //Serial.println("Not sending steering2");
+    }
+  
+    // Force steer angle to zero
+    // TODO
+  
+    //steer_command = pulse_to_position_command(rc_command[CH_STEER], steeringAngle,CH_STEER);
+  
+    motorDrivers.sendSteerCommand(steer_command);
+    
+  #endif // MOTORS_ON
+  
+  mass_right = load_right.get_units();
+  mass_left = load_left.get_units();
+  mass_rear = load_rear.get_units();
 
-  delay(DELAY_T); // May not be necessary if there is more going on here
-  //Serial.println("8");
+  data_line = "";
+  data_line += "[";
+  data_line += timer;
+  data_line += "]";
+  data_line += "[o:";
+  data_line += mpu_orien[VEC3_X] * RAD_TO_DEGREE;
+  data_line += ",";
+  data_line += mpu_orien[VEC3_Y] * RAD_TO_DEGREE;
+  data_line += ",";
+  data_line += mpu_orien[VEC3_Z] * RAD_TO_DEGREE;
+  data_line += "]";
+  data_line += "[a:";
+  data_line += mpu_acl[VEC3_X] * ACCL_G_PER_VAL_X * GRAVITY;
+  data_line += ",";
+  data_line += mpu_acl[VEC3_Y] * ACCL_G_PER_VAL_Y * GRAVITY;
+  data_line += ",";
+  data_line += mpu_acl[VEC3_Z] * ACCL_G_PER_VAL_Z * GRAVITY;
+  data_line += "]";
+  data_line += "[e:";
+  data_line += dist_travelled;
+  data_line += ",";
+  data_line += steeringAngle;
+  data_line += "]";
+  data_line += "[c:";
+  data_line += drive_command;
+  data_line += ",";
+  data_line += steer_command;
+  data_line += "]";
+  data_line += "[w:";
+  data_line += MPU.m_rawGyro[VEC3_X];
+  data_line += ",";
+  data_line += MPU.m_rawGyro[VEC3_Y];
+  data_line += ",";
+  data_line += MPU.m_rawGyro[VEC3_Z];
+  data_line += "]";
+  data_line += "[m:";
+  data_line += mass_right;
+  data_line += ",";
+  data_line += mass_left;
+  data_line += ",";
+  data_line += mass_rear;
+  data_line += ",";
+  data_line += mass_rear+mass_right+mass_left; 
+  data_line += "]\n";
+    
+  #ifdef WIFI_ON
+    if (client.connected()) {
+  //    client.print('['); client.print(timer); client.print(']');
+  //    writeAngle(&client, mpu_orien);
+  //    writeAccl(&client, mpu_acl);
+  //    encoders.serialWriteVals(&client);
+  //    client.println();
+      //Serial.println("Sending data");
+      client.print(data_line);
+    }
+  #endif
+  
+  #ifdef RF_ON
+    RF_serial->print(data_line);
+  #endif //RF_ON
+  
+  Serial.print(data_line); // Debugging
+  Serial.println();
+  
+  //delay(DELAY_T); // May not be necessary if there is more going on here
 }
 
 void printWifiStatus() {
