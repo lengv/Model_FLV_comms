@@ -1,12 +1,12 @@
 %% Reads files saved by connect_to_flv_tcpip.m
 
-filename = '[2015-04-24][09-37-50]Test1'; % Choose appropriate file
+filename = '[2015-07-18][18-33-20]Test1'; % Choose appropriate file
 ext = 'data';
 
 fid = fopen(strcat(filename,'.',ext),'r'); % Open in read only mode
 
 % Get data
-data = fscanf(fid,'[%d][o:%f,%f,%f][a:%f,%f,%f][e:%f,%f][c:%d,%d][w:%d,%d,%d]\n',[14, inf]);
+data = fscanf(fid,'[%d][o:%f,%f,%f][a:%f,%f,%f][e:%f,%f][c:%d,%d][w:%d,%d,%d][m:%f,%f,%f]\n',[17, inf]);
 
 fclose(fid); % Close file
 
@@ -27,6 +27,10 @@ ind_steer_com = 11;
 ind_gyro_rawX = 12;
 ind_gyro_rawY = 13;
 ind_gyro_rawZ = 14;
+
+ind_load_right = 15;
+ind_load_left = 16;
+ind_load_rear = 17;
 
 %% Put data into appropriate variables
 time = data(ind_time,:);
@@ -97,6 +101,26 @@ figure()
 time_diff  =  data(ind_time,2:end) - data(ind_time,1:end-1);
 title_str = sprintf('Time between samples. mean: %f, std: %f', mean(time_diff), std(time_diff));
 
-plot(time_diff);
-axis([0 length(time_diff) 0 300]);
+plot(time(2:end),time_diff);
+%axis([0 length(time_diff) 0 300]);
 title(title_str);
+
+%%
+figure()
+m_right = data(ind_load_right,:);
+m_left = data(ind_load_left,:);
+m_rear = data(ind_load_rear,:);
+
+load_nan = zeros(size(m_right));
+load_nan = nan*load_nan;
+load_nan(m_right <= 0) = m_right(m_right <= 0);
+load_nan(m_left <= 0) = m_left(m_left <= 0);
+load_nan(m_rear <= 0) = m_rear(m_rear <= 0);
+
+hold on
+plot(time,m_right);
+plot(time,m_left,'k');
+plot(time,m_rear,'m');
+plot(time, load_nan, 'r', 'LineWidth',4);
+plot(time, load_nan, 'r*', 'LineWidth',2);
+hold off

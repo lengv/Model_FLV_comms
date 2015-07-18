@@ -83,9 +83,9 @@ HX711 load_right(22,23); // Right load sensor
 HX711 load_left(24,25); // Left load sensor
 HX711 load_rear(26,27); // Rear load sensor
 
-long mass_right = 0;
-long mass_left = 0;
-long mass_rear = 0;
+float mass_right = 0;
+float mass_left = 0;
+float mass_rear = 0;
 
 //==== WIFI ====//
 char ssid[] = "4360D-114771-M";      // your network SSID (name)
@@ -327,8 +327,6 @@ void loop() {
   data_line += mass_left;
   data_line += ",";
   data_line += mass_rear;
-  data_line += ",";
-  data_line += mass_rear+mass_right+mass_left; 
   data_line += "]\n";
     
   #ifdef WIFI_ON
@@ -347,12 +345,13 @@ void loop() {
     RF_serial->print(data_line);
   #endif //RF_ON
   
-  Serial.print(data_line); // Debugging
-  Serial.println();
+//  Serial.print(data_line); // Debugging
+//  Serial.println();
   
   //delay(DELAY_T); // May not be necessary if there is more going on here
 }
 
+#ifdef WIFI_ON
 void printWifiStatus() {
   // print the SSID of the network you're attached to:
   Serial.print("SSID: ");
@@ -369,3 +368,4 @@ void printWifiStatus() {
   Serial.print(rssi);
   Serial.println(" dBm");
 }
+#endif
