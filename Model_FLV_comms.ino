@@ -328,6 +328,42 @@ void loop() {
   data_line += ",";
   data_line += mass_rear;
   data_line += "]\n";
+  
+//  data_line = "";
+//  data_line += timer;
+//  data_line += ",";
+//  data_line += mpu_orien[VEC3_X] * RAD_TO_DEGREE;
+//  data_line += ",";
+//  data_line += mpu_orien[VEC3_Y] * RAD_TO_DEGREE;
+//  data_line += ",";
+//  data_line += mpu_orien[VEC3_Z] * RAD_TO_DEGREE;
+//  data_line += ",";
+//  data_line += mpu_acl[VEC3_X] * ACCL_G_PER_VAL_X * GRAVITY;
+//  data_line += ",";
+//  data_line += mpu_acl[VEC3_Y] * ACCL_G_PER_VAL_Y * GRAVITY;
+//  data_line += ",";
+//  data_line += mpu_acl[VEC3_Z] * ACCL_G_PER_VAL_Z * GRAVITY;
+//  data_line += ",";
+//  data_line += dist_travelled;
+//  data_line += ",";
+//  data_line += steeringAngle;
+//  data_line += ",";
+//  data_line += drive_command;
+//  data_line += ",";
+//  data_line += steer_command;
+//  data_line += ",";
+//  data_line += MPU.m_rawGyro[VEC3_X];
+//  data_line += ",";
+//  data_line += MPU.m_rawGyro[VEC3_Y];
+//  data_line += ",";
+//  data_line += MPU.m_rawGyro[VEC3_Z];
+//  data_line += ",";
+//  data_line += mass_right;
+//  data_line += ",";
+//  data_line += mass_left;
+//  data_line += ",";
+//  data_line += mass_rear;
+//  data_line += "\n";
     
   #ifdef WIFI_ON
     if (client.connected()) {
