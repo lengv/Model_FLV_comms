@@ -1,18 +1,20 @@
 %% Reads files saved by connect_to_flv_tcpip.m
 
-%filename = '[2015-07-19][19-51-06]Test1'; % Choose appropriate file
-filename = '[2015-07-21][11-53-45]Test1'; % Choose appropriate file
-filename = '[2015-07-27][13-40-01]Test1';
+filename = '[2015-07-28][16-25-35]Test1';
 
 ext = 'data';
 
-fid = fopen(strcat(filename,'.',ext),'r'); % Open in read only mode
+fname = strcat(filename,'.',ext);
+
+%fid = fopen(strcat(filename,'.',ext),'r'); % Open in read only mode
 
 % Get data
-data = fscanf(fid,'[%d][o:%f,%f,%f][a:%f,%f,%f][e:%f,%f][c:%d,%d][w:%d,%d,%d][m:%f,%f,%f]\n',[17, inf]);
+% data = fscanf(fid,'[%d][o:%f,%f,%f][a:%f,%f,%f][e:%f,%f][c:%d,%d][w:%d,%d,%d][m:%f,%f,%f]\n',[17, inf]);
+data = csvread(fname);
+data = data';
 
-fclose(fid); % Close file
-
+%fclose(fid); % Close file
+% 
 % Index names
 ind_time = 1;   
 ind_ox = 2;
@@ -71,10 +73,9 @@ load_nan(m_rear <= 0) = m_rear(m_rear <= 0);
 %%
 red_line = zeros(size(m_right));
 red_line = nan*load_nan;
-% red_line(m_right <= 0) = 1;
-% red_line(m_left <= 0) = 1;
-% red_line(m_rear <= 0) = 1;
-%red_line(isnan(load_nan)) = 0;
+red_line(m_right <= 0) = 1;
+red_line(m_left <= 0) = 1;
+red_line(m_rear <= 0) = 1;
 
 %% Plot
 figure();
@@ -83,10 +84,6 @@ hold on;
 plot(time,ax,'b');
 plot(time,ay,'r');
 plot(time,az,'k');
-%plot(time,rad2deg(alpha),'g');
-%patchline(time,red_line,'linestyle','--','edgecolor','r','linewidth',10,'edgealpha',0.5);
-%patch([15,20 ,20 15],[get(gca,'YLim') fliplr(get(gca,'YLim'))],'red');
-%patch([10 40 40 10 ], [0 0 10 10],'r','LineStyle','None','FaceAlpha',0.5)
 
 plot(time, sqrt((ax.^2 + ay.^2 + az.^2)/3),'m');
 

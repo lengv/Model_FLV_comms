@@ -11,6 +11,8 @@
 #define RF_ON
 #define ENC_ON
 
+#define CSV_MODE
+
 
 #include <String.h>
 
@@ -108,7 +110,7 @@ unsigned long timer;
 // Delay time to allow RF to work
 #define DELAY_T 10 //ms
 
-String data_line; // Accumulator
+String data_line = ""; // Accumulator
 
 int wifi_count=0;
 
@@ -149,7 +151,7 @@ void setup() {
   // Only necessary if using multiple IMU
   MPU.selectDevice(DEVICE_TO_USE);
   // Start MPU
-  mpu_con = MPU.init(MPU_UPDATE_RATE, MPU_MAG_MIX_GYRO_AND_SOME_MAG,
+  mpu_con = MPU.init(MPU_UPDATE_RATE, MPU_MAG_MIX_GYRO_AND_MAG,
                      MAG_UPDATE_RATE, MPU_LPF_RATE);
   mpu_set_accel_fsr(MPU_ACCL_FSR);
 #endif
@@ -208,18 +210,15 @@ void loop() {
   //Serial.println("2");
 
   //==== MPU ====//
-  Wire.beginTransmission(104); //check if mpu is there
-  if(Wire.endTransmission() == 0){
+//  Wire.beginTransmission(104); //check if mpu is there
+//  if(Wire.endTransmission() == 0){
     if (mpu_con && MPU.read()) {                                   // get the latest data if ready yet
       mpu_orien = MPU.m_fusedEulerPose;
       mpu_acl = MPU.m_calAccel;
     }
-  } else{
-//    mpu_con = MPU.init(MPU_UPDATE_RATE, MPU_MAG_MIX_GYRO_AND_SOME_MAG,
-//                     MAG_UPDATE_RATE, MPU_LPF_RATE);
-//    mpu_set_accel_fsr(MPU_ACCL_FSR);
-    Serial.println("no IMU");
-  }
+//  } else{
+//    Serial.println("no IMU");
+//  }
   //=============//
 
   //==== RC_PWM ====//
@@ -230,11 +229,7 @@ void loop() {
   //print_channel(RF_serial, rc_command[0], rc_command[CH_DRIVE], rc_command[CH_STEER]);
   //===============//
 
-
-  if (rc_command[CH_DRIVE] <= ch_max[CH_DRIVE] && rc_command[CH_DRIVE] >= ch_min[CH_DRIVE]) {
-    drive_command = pulse_to_command(rc_command[CH_DRIVE], CH_DRIVE);
-    steer_command = pulse_to_command(rc_command[CH_STEER], CH_STEER);
-  } else {
+  if (rc_command[CH_DRIVE] == 0){
     Serial.println("no RC input");
     if (RF_serial->available() == 2) {
       drive_command = RF_serial->read();
@@ -244,7 +239,30 @@ void loop() {
       drive_command = 0;
       steer_command = 0;
     }
+  } else{
+    if(rc_command[CH_DRIVE] > ch_max[CH_DRIVE]){
+      rc_command[CH_DRIVE] = ch_max[CH_DRIVE];
+    } else if(rc_command[CH_DRIVE] < ch_min[CH_DRIVE]){
+       rc_command[CH_DRIVE] = ch_min[CH_DRIVE];
+    }
+    
+    drive_command = pulse_to_command(rc_command[CH_DRIVE], CH_DRIVE);
+    steer_command = pulse_to_command(rc_command[CH_STEER], CH_STEER);
   }
+//  if (rc_command[CH_DRIVE] <= ch_max[CH_DRIVE] && rc_command[CH_DRIVE] >= ch_min[CH_DRIVE]) {
+//    drive_command = pulse_to_command(rc_command[CH_DRIVE], CH_DRIVE);
+//    steer_command = pulse_to_command(rc_command[CH_STEER], CH_STEER);
+//  } else {
+//    Serial.println("no RC input");
+//    if (RF_serial->available() == 2) {
+//      drive_command = RF_serial->read();
+//      steer_command = RF_serial->read();
+//      Serial.println("from MATLAB");
+//    } else{
+//      drive_command = 0;
+//      steer_command = 0;
+//    }
+//  }
 
   if (RF_serial->available() == 2) {
     drive_command = RF_serial->read();
@@ -287,84 +305,87 @@ void loop() {
   mass_rear = load_rear.get_units();
 
   data_line = "";
-  data_line += "[";
-  data_line += timer;
-  data_line += "]";
-  data_line += "[o:";
-  data_line += mpu_orien[VEC3_X] * RAD_TO_DEGREE;
-  data_line += ",";
-  data_line += mpu_orien[VEC3_Y] * RAD_TO_DEGREE;
-  data_line += ",";
-  data_line += mpu_orien[VEC3_Z] * RAD_TO_DEGREE;
-  data_line += "]";
-  data_line += "[a:";
-  data_line += mpu_acl[VEC3_X] * ACCL_G_PER_VAL_X * GRAVITY;
-  data_line += ",";
-  data_line += mpu_acl[VEC3_Y] * ACCL_G_PER_VAL_Y * GRAVITY;
-  data_line += ",";
-  data_line += mpu_acl[VEC3_Z] * ACCL_G_PER_VAL_Z * GRAVITY;
-  data_line += "]";
-  data_line += "[e:";
-  data_line += dist_travelled;
-  data_line += ",";
-  data_line += steeringAngle;
-  data_line += "]";
-  data_line += "[c:";
-  data_line += drive_command;
-  data_line += ",";
-  data_line += steer_command;
-  data_line += "]";
-  data_line += "[w:";
-  data_line += MPU.m_rawGyro[VEC3_X];
-  data_line += ",";
-  data_line += MPU.m_rawGyro[VEC3_Y];
-  data_line += ",";
-  data_line += MPU.m_rawGyro[VEC3_Z];
-  data_line += "]";
-  data_line += "[m:";
-  data_line += mass_right;
-  data_line += ",";
-  data_line += mass_left;
-  data_line += ",";
-  data_line += mass_rear;
-  data_line += "]\n";
+  #ifndef CSV_MODE
+    data_line += "[";
+    data_line += timer;
+    data_line += "]";
+    data_line += "[o:";
+    data_line += mpu_orien[VEC3_X] * RAD_TO_DEGREE;
+    data_line += ",";
+    data_line += mpu_orien[VEC3_Y] * RAD_TO_DEGREE;
+    data_line += ",";
+    data_line += mpu_orien[VEC3_Z] * RAD_TO_DEGREE;
+    data_line += "]";
+    data_line += "[a:";
+    data_line += mpu_acl[VEC3_X] * ACCL_G_PER_VAL_X * GRAVITY;
+    data_line += ",";
+    data_line += mpu_acl[VEC3_Y] * ACCL_G_PER_VAL_Y * GRAVITY;
+    data_line += ",";
+    data_line += mpu_acl[VEC3_Z] * ACCL_G_PER_VAL_Z * GRAVITY;
+    data_line += "]";
+    data_line += "[e:";
+    data_line += dist_travelled;
+    data_line += ",";
+    data_line += steeringAngle;
+    data_line += "]";
+    data_line += "[c:";
+    data_line += drive_command;
+    data_line += ",";
+    data_line += steer_command;
+    data_line += "]";
+    data_line += "[w:";
+    data_line += MPU.m_rawGyro[VEC3_X];
+    data_line += ",";
+    data_line += MPU.m_rawGyro[VEC3_Y];
+    data_line += ",";
+    data_line += MPU.m_rawGyro[VEC3_Z];
+    data_line += "]";
+    data_line += "[m:";
+    data_line += mass_right;
+    data_line += ",";
+    data_line += mass_left;
+    data_line += ",";
+    data_line += mass_rear;
+    data_line += "]\n";
+  #else
+    data_line += timer;
+    data_line += ",";
+    data_line += mpu_orien[VEC3_X] * RAD_TO_DEGREE;
+    data_line += ",";
+    data_line += mpu_orien[VEC3_Y] * RAD_TO_DEGREE;
+    data_line += ",";
+    data_line += mpu_orien[VEC3_Z] * RAD_TO_DEGREE;
+    data_line += ",";
+    data_line += mpu_acl[VEC3_X] * ACCL_G_PER_VAL_X * GRAVITY;
+    data_line += ",";
+    data_line += mpu_acl[VEC3_Y] * ACCL_G_PER_VAL_Y * GRAVITY;
+    data_line += ",";
+    data_line += mpu_acl[VEC3_Z] * ACCL_G_PER_VAL_Z * GRAVITY;
+    data_line += ",";
+    data_line += dist_travelled;
+    data_line += ",";
+    data_line += steeringAngle;
+    data_line += ",";
+    data_line += drive_command;
+    data_line += ",";
+    data_line += steer_command;
+    data_line += ",";
+    data_line += MPU.m_rawGyro[VEC3_X];
+    data_line += ",";
+    data_line += MPU.m_rawGyro[VEC3_Y];
+    data_line += ",";
+    data_line += MPU.m_rawGyro[VEC3_Z];
+    data_line += ",";
+    data_line += mass_right;
+    data_line += ",";
+    data_line += mass_left;
+    data_line += ",";
+    data_line += mass_rear;
+    data_line += "\n";
+  #endif
   
-//  data_line = "";
-//  data_line += timer;
-//  data_line += ",";
-//  data_line += mpu_orien[VEC3_X] * RAD_TO_DEGREE;
-//  data_line += ",";
-//  data_line += mpu_orien[VEC3_Y] * RAD_TO_DEGREE;
-//  data_line += ",";
-//  data_line += mpu_orien[VEC3_Z] * RAD_TO_DEGREE;
-//  data_line += ",";
-//  data_line += mpu_acl[VEC3_X] * ACCL_G_PER_VAL_X * GRAVITY;
-//  data_line += ",";
-//  data_line += mpu_acl[VEC3_Y] * ACCL_G_PER_VAL_Y * GRAVITY;
-//  data_line += ",";
-//  data_line += mpu_acl[VEC3_Z] * ACCL_G_PER_VAL_Z * GRAVITY;
-//  data_line += ",";
-//  data_line += dist_travelled;
-//  data_line += ",";
-//  data_line += steeringAngle;
-//  data_line += ",";
-//  data_line += drive_command;
-//  data_line += ",";
-//  data_line += steer_command;
-//  data_line += ",";
-//  data_line += MPU.m_rawGyro[VEC3_X];
-//  data_line += ",";
-//  data_line += MPU.m_rawGyro[VEC3_Y];
-//  data_line += ",";
-//  data_line += MPU.m_rawGyro[VEC3_Z];
-//  data_line += ",";
-//  data_line += mass_right;
-//  data_line += ",";
-//  data_line += mass_left;
-//  data_line += ",";
-//  data_line += mass_rear;
-//  data_line += "\n";
-    
+  
+//============= SENDING ============//
   #ifdef WIFI_ON
     if (client.connected()) {
   //    client.print('['); client.print(timer); client.print(']');

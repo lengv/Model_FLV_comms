@@ -37,7 +37,7 @@ const float DIST_PER_COUNT = (PI*WHEEL_DIAMETER)/1440; // Note the division of 1
 #define PI_ON_2 PI/2
 #define PI_ON_2_3 PI_ON_2*3
 
-#define ANG_OFFSET -0.07-PI_ON_2
+#define ANG_OFFSET -0.17-PI_ON_2
 
 class Truck_Enc
 {

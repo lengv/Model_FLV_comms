@@ -9,12 +9,12 @@
   // ======================= SETUP ============================== //
   //  MPU_UPDATE_RATE defines the rate (in Hz) at which the MPU updates the sensor data and DMP output
   
-  #define MPU_UPDATE_RATE  (30)
+  #define MPU_UPDATE_RATE  (200)
   
   //  MAG_UPDATE_RATE defines the rate (in Hz) at which the MPU updates the magnetometer data
   //  MAG_UPDATE_RATE should be less than or equal to the MPU_UPDATE_RATE
   
-  #define MAG_UPDATE_RATE  (10)
+  #define MAG_UPDATE_RATE  (100)
   
   //  MPU_MAG_MIX defines the influence that the magnetometer has on the yaw output.
   //  The magnetometer itself is quite noisy so some mixing with the gyro yaw can help
@@ -27,7 +27,7 @@
   
   //  MPU_LPF_RATE is the low pas filter rate and can be between 5 and 188Hz
   
-  #define MPU_LPF_RATE   40
+  #define MPU_LPF_RATE   50
   
   // Full scale range (fsr) - functions found in MotionDriver/inv_mpu.h
   #define MPU_ACCL_FSR_2   2 // +-  2 G

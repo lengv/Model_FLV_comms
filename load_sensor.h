@@ -8,6 +8,7 @@ void init_load_sensors(HX711* right, HX711* left, HX711* rear){
   
   // Tared weight of only springs
   right->set_offset(7560334);
-  left->set_offset(7719497);
+  //left->set_offset(7719497);
+  left->set_offset(7767533);
   rear->set_offset(8344577);
 }

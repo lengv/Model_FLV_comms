@@ -20,13 +20,13 @@
 //#define STEER_ZR 192
 //#define STEER_FF 254
 
-#define STEER_FR 5
+#define STEER_FR 1
 #define STEER_ZR 64
-#define STEER_FF 122
+#define STEER_FF 126
 
-#define DRIVE_FR 132
+#define DRIVE_FR 127
 #define DRIVE_ZR 192
-#define DRIVE_FF 250
+#define DRIVE_FF 255
 
 // Note extra bit is used for kill motors
 #define DRIVE_RANGE 127
