@@ -315,7 +315,7 @@ void loop() {
         
         drive_command = DRIVE_FF;// Temporary while drive PID is set to manual
       }
-    }else if(dist_travelled <= 2000+500){
+    }else if(dist_travelled <= 2000+1000){
       // Turn
       Setpoint_d = 80;
       Setpoint_s = PI/3;
