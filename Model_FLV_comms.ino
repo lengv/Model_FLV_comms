@@ -228,6 +228,8 @@ void setup() {
   
   // Reserve some space for the string
   data_line.reserve(100);
+  
+  delay(2000);
 }
 
 /*=================================Start Main Loop====================================================*/
@@ -301,7 +303,8 @@ void loop() {
   steeringAngle = encoders.getAngle();
 
   #ifdef PID_ON
-    if(dist_travelled <= 2000){
+//    if(dist_travelled <= 2000){
+    if(dist_travelled >= -1000){
       
       if(initialising_alpha && abs(steeringAngle - 0) > PI/20){
         // Set wheel to 0
@@ -313,16 +316,16 @@ void loop() {
         Setpoint_d = 80;
         Setpoint_s = 0;
         
-        drive_command = DRIVE_FF;// Temporary while drive PID is set to manual
+        drive_command = DRIVE_FR;// Temporary while drive PID is set to manual
       }
-    }else if(dist_travelled <= 2000+1000){
-      // Turn
-      Setpoint_d = 80;
-      Setpoint_s = PI/3;
+//    }else if(dist_travelled <= 2000+1000){
+//      // Turn
+//      Setpoint_d = 80;
+//      Setpoint_s = PI/3;
     }else{
       // Stop
       Setpoint_d = 0;
-      Setpoint_s = PI/2.5;
+      Setpoint_s = 0;
       drive_command = DRIVE_ZR; // Temporary while drive PID is set to manual
       Serial.println("stop!");
     }
@@ -345,11 +348,11 @@ void loop() {
     drive_command = drive_temp;
     steer_command = (Output_s + STEER_ZR);
     
-    Serial.print("d/s:"); Serial.print(Output_d); Serial.print(","); Serial.print(Output_s);
-    Serial.print(" enc:");Serial.print(dist_travelled);
-    Serial.print(","); Serial.print(steeringAngle);
-    Serial.print(" vel:");Serial.print(encoders.getVel());
-    Serial.println();
+//    Serial.print("d/s:"); Serial.print(Output_d); Serial.print(","); Serial.print(Output_s);
+//    Serial.print(" enc:");Serial.print(dist_travelled);
+//    Serial.print(","); Serial.print(steeringAngle);
+//    Serial.print(" vel:");Serial.print(encoders.getVel());
+//    Serial.println();
   #endif
 
   // Drive command section
