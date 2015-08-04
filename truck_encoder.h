@@ -50,12 +50,18 @@ class Truck_Enc
     }
     
     void readEnc(void){
+      encQuadVal_prev = encQuadVal;
       encQuadVal = enc_quadrature.read();
+      vel = (encQuadVal - encQuadVal_prev)*DIST_PER_COUNT;
       encAbsVal  = pulseIn(ENC_ABS_PIN,HIGH);
     }
 
     long getEncQuad(void){
       return encQuadVal;
+    }
+    
+    long getEncQuadPrev(void){
+      return encQuadVal_prev;
     }
     
     int getEncAbs(void){
@@ -64,6 +70,10 @@ class Truck_Enc
     
     float getDist(void){
       return encQuadVal*DIST_PER_COUNT;
+    }
+    
+    float getVel(void){
+      return vel;
     }
     
     float getAngle(void){
@@ -98,7 +108,9 @@ class Truck_Enc
   
   private:
     Encoder enc_quadrature;
-    int encQuadVal;
+    long encQuadVal;
+    long encQuadVal_prev;
+    float vel;
     float encAbsVal;
 };
 

@@ -6,13 +6,15 @@
 //==== CONTROL DEFINES - Comment out if not connected
 #define MPU_ON
 #define MOTORS_ON
-#define DEBUG_ON
+//#define DEBUG_ON  // Add serial out onto Arduino display
 //#define WIFI_ON
 #define RF_ON
 #define ENC_ON
+//#define RC_ON
+//#define RF_READ_ON
+#define PID_ON
 
-#define CSV_MODE
-
+#define CSV_MODE  // Comment for readable output
 
 #include <String.h>
 
@@ -47,6 +49,9 @@
 // Load sensor
 #include <HX711.h>
 #include "load_sensor.h"
+
+// PID
+#include <PID_v1.h>
 
 /*=================================Defines and Globals===============================================*/
 
@@ -89,6 +94,18 @@ float mass_right = 0;
 float mass_left = 0;
 float mass_rear = 0;
 
+//==== PID ====//
+#ifdef PID_ON
+  double Setpoint_d, Input_d, Output_d;
+  double Setpoint_s, Input_s, Output_s;
+  //Specify the links and initial tuning parameters
+  double Kp_d=1, Ki_d=0, Kd_d=0;
+  double Kp_s=100, Ki_s=1, Kd_s=0;
+  
+  PID drive_controller(&Input_d, &Output_d, &Setpoint_d, Kp_d, Ki_d, Kd_d, DIRECT);
+  PID steer_controller(&Input_s, &Output_s, &Setpoint_s, Kp_s, Ki_s, Kd_s, DIRECT);
+#endif
+
 //==== WIFI ====//
 char ssid[] = "4360D-114771-M";      // your network SSID (name)
 
@@ -113,6 +130,10 @@ unsigned long timer;
 String data_line = ""; // Accumulator
 
 int wifi_count=0;
+
+int drive_temp=0;
+
+int initialising_alpha = 1;
 
 // For deactivating internal pull-ups 
 #ifndef cbi
@@ -161,6 +182,27 @@ void setup() {
   pinMode(RC_PIN_CH2, INPUT);
   pinMode(RC_PIN_CH3, INPUT);
   //===============//
+  
+  //==== PID ====//
+  #ifdef PID_ON
+    drive_controller.SetSampleTime(50);
+    steer_controller.SetSampleTime(50);
+    
+    //drive_controller.SetOutputLimits(-64, 63);
+    drive_controller.SetOutputLimits(-10, 10);
+    steer_controller.SetOutputLimits(-63, 63);
+    
+    Setpoint_d = 0;
+    Setpoint_s = 0;
+    
+    drive_controller.SetMode(MANUAL);
+    steer_controller.SetMode(AUTOMATIC);
+    
+    drive_command = DRIVE_ZR;
+    steer_command = STEER_ZR;
+  #endif
+  //==============//
+  
   //==== WIFI ====//
   #ifdef WIFI_ON
     if (WiFi.status() == WL_NO_SHIELD) {
@@ -183,20 +225,10 @@ void setup() {
   #endif
   //===============//
   init_load_sensors(&load_right, &load_left, &load_rear);
+  
   // Reserve some space for the string
   data_line.reserve(100);
 }
-
-//int maxX = -9999;
-//int minX = 9999;
-//int maxZ = -9999;
-//int minZ = 9999;
-//int maxY = -9999;
-//int minY = 9999;
-
-//int change = 0;
-//int _count = 1;
-//int _skip = 20;
 
 /*=================================Start Main Loop====================================================*/
 void loop() {
@@ -229,53 +261,96 @@ void loop() {
   //print_channel(RF_serial, rc_command[0], rc_command[CH_DRIVE], rc_command[CH_STEER]);
   //===============//
 
-  if (rc_command[CH_DRIVE] == 0){
-    Serial.println("no RC input");
+  #ifdef RC_ON
+    if (rc_command[CH_DRIVE] == 0){
+      Serial.println("no RC input");
+      if (RF_serial->available() == 2) {
+        drive_command = RF_serial->read();
+        steer_command = RF_serial->read();
+        Serial.println("from MATLAB");
+      } else{
+        drive_command = 0;
+        steer_command = 0;
+      }
+    } else{
+      if(rc_command[CH_DRIVE] > ch_max[CH_DRIVE]){
+        rc_command[CH_DRIVE] = ch_max[CH_DRIVE];
+      } else if(rc_command[CH_DRIVE] < ch_min[CH_DRIVE]){
+         rc_command[CH_DRIVE] = ch_min[CH_DRIVE];
+      }
+      
+      drive_command = pulse_to_command(rc_command[CH_DRIVE], CH_DRIVE);
+      steer_command = pulse_to_command(rc_command[CH_STEER], CH_STEER);
+    }
+  #endif RC_ON
+
+  #ifdef RF_READ_ON
     if (RF_serial->available() == 2) {
       drive_command = RF_serial->read();
       steer_command = RF_serial->read();
       Serial.println("from MATLAB");
-    } else{
-      drive_command = 0;
-      steer_command = 0;
     }
-  } else{
-    if(rc_command[CH_DRIVE] > ch_max[CH_DRIVE]){
-      rc_command[CH_DRIVE] = ch_max[CH_DRIVE];
-    } else if(rc_command[CH_DRIVE] < ch_min[CH_DRIVE]){
-       rc_command[CH_DRIVE] = ch_min[CH_DRIVE];
-    }
-    
-    drive_command = pulse_to_command(rc_command[CH_DRIVE], CH_DRIVE);
-    steer_command = pulse_to_command(rc_command[CH_STEER], CH_STEER);
-  }
-//  if (rc_command[CH_DRIVE] <= ch_max[CH_DRIVE] && rc_command[CH_DRIVE] >= ch_min[CH_DRIVE]) {
-//    drive_command = pulse_to_command(rc_command[CH_DRIVE], CH_DRIVE);
-//    steer_command = pulse_to_command(rc_command[CH_STEER], CH_STEER);
-//  } else {
-//    Serial.println("no RC input");
-//    if (RF_serial->available() == 2) {
-//      drive_command = RF_serial->read();
-//      steer_command = RF_serial->read();
-//      Serial.println("from MATLAB");
-//    } else{
-//      drive_command = 0;
-//      steer_command = 0;
-//    }
-//  }
-
-  if (RF_serial->available() == 2) {
-    drive_command = RF_serial->read();
-    steer_command = RF_serial->read();
-    Serial.println("from MATLAB");
-  }
-
+  #endif
+  
+  
   // Read values
   encoders.readEnc();
 
   // Get values from object
   dist_travelled = encoders.getDist();
   steeringAngle = encoders.getAngle();
+
+  #ifdef PID_ON
+    if(dist_travelled <= 2000){
+      
+      if(initialising_alpha && abs(steeringAngle - 0) > PI/20){
+        // Set wheel to 0
+        Setpoint_d = 0;
+        Setpoint_s = 0;
+      }else{
+        initialising_alpha = 0;
+        // Forward
+        Setpoint_d = 80;
+        Setpoint_s = 0;
+        
+        drive_command = DRIVE_FF;// Temporary while drive PID is set to manual
+      }
+    }else if(dist_travelled <= 2000+500){
+      // Turn
+      Setpoint_d = 80;
+      Setpoint_s = PI/3;
+    }else{
+      // Stop
+      Setpoint_d = 0;
+      Setpoint_s = PI/2.5;
+      drive_command = DRIVE_ZR; // Temporary while drive PID is set to manual
+      Serial.println("stop!");
+    }
+    
+    Input_d = encoders.getVel();
+    Input_s = steeringAngle;
+    
+//    drive_temp = drive_command + Output_d;
+    drive_temp = drive_command;
+    
+//    if(drive_temp < DRIVE_FR){
+//      drive_temp = DRIVE_FR;
+//    } else if(drive_temp > DRIVE_FF){
+//      drive_temp = DRIVE_FF;
+//    }
+    
+//    drive_controller.Compute();
+    steer_controller.Compute();
+    
+    drive_command = drive_temp;
+    steer_command = (Output_s + STEER_ZR);
+    
+    Serial.print("d/s:"); Serial.print(Output_d); Serial.print(","); Serial.print(Output_s);
+    Serial.print(" enc:");Serial.print(dist_travelled);
+    Serial.print(","); Serial.print(steeringAngle);
+    Serial.print(" vel:");Serial.print(encoders.getVel());
+    Serial.println();
+  #endif
 
   // Drive command section
   #ifdef MOTORS_ON
@@ -402,8 +477,10 @@ void loop() {
     RF_serial->print(data_line);
   #endif //RF_ON
   
-//  Serial.print(data_line); // Debugging
-//  Serial.println();
+  #ifdef DEBUG_ON
+    Serial.print(data_line); // Debugging
+    Serial.println();
+  #endif
   
   //delay(DELAY_T); // May not be necessary if there is more going on here
 }

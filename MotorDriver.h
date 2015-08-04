@@ -22,9 +22,9 @@
 
 #define STEER_FR 1
 #define STEER_ZR 64
-#define STEER_FF 126
+#define STEER_FF 127
 
-#define DRIVE_FR 127
+#define DRIVE_FR 128
 #define DRIVE_ZR 192
 #define DRIVE_FF 255
 
