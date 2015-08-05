@@ -1,6 +1,6 @@
 %% Reads files saved by connect_to_flv_tcpip.m
 
-filename = '[2015-08-05][09-15-50]ForwardStop';
+filename = './Test Runs/[2015-08-05][09-04-46]SingleRightTip';
 
 ext = 'data';
 
