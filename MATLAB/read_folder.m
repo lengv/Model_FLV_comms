@@ -1,14 +1,17 @@
-function [  ] = read_folder( dir_name, ext )
+function [ output, fnames ] = read_folder( dir_name, ext, index_to_view)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
     %% Reads files saved by connect_to_flv_tcpip.m
-    if nargin < 2 
-        ext = 'data';
-        if nargin<1
-            dir_name = './Test Runs/';
+%     if nargin < 3
+%         index_to_view = [];
+        if nargin < 2 
+            ext = 'data';
+            if nargin<1
+                dir_name = './Test Runs/';
+            end
         end
-    end
+%     end
     
     if dir_name(end) ~= '/'
         dir_name = [dir_name, '/'];
@@ -18,6 +21,11 @@ function [  ] = read_folder( dir_name, ext )
     
     hs = zeros(length(all_files),1);
     
+    output{length(all_files)}=[];
+    
+    if isempty(index_to_view)
+        index_to_view = 1:length(all_files);
+    end
 
     for ind = 1:length(all_files)
         %%
@@ -28,7 +36,7 @@ function [  ] = read_folder( dir_name, ext )
         if ~all_files(ind).isdir && length(all_files(ind).name) > length(['.' ext]) && strcmp(all_files(ind).name(end+1-length(ext):end),ext);
             data = csvread([dir_name, all_files(ind).name]);
             data = data';
-
+            output{ind} = data;
             %fclose(fid); % Close file
             % 
             % Index names
@@ -94,108 +102,110 @@ function [  ] = read_folder( dir_name, ext )
             red_line(m_rear <= 0) = 1;
 
             %% Plot
-            hs(ind) = figure('units','normalized','outerposition',[0 0 1 1]);
-            
-            subplot(4,2,1);
-            hold on;
-            plot(time,ax,'b');
-            plot(time,ay,'r');
-            plot(time,az,'k');
+                if any(ind == index_to_view)
+                hs(ind) = figure('units','normalized','outerposition',[0 0 1 1]);
 
-            plot(time, sqrt((ax.^2 + ay.^2 + az.^2)/3),'m');
+                subplot(4,2,1);
+                hold on;
+                plot(time,ax,'b');
+                plot(time,ay,'r');
+                plot(time,az,'k');
 
-            plot(time,ax.*red_line,'b*','MarkerSize',3);
-            plot(time,ay.*red_line,'r*','MarkerSize',3);
-            plot(time,az.*red_line,'k*','MarkerSize',3);
+                plot(time, sqrt((ax.^2 + ay.^2 + az.^2)/3),'m');
 
-            hold off;
-            legend('ax','ay','az','Location','NorthWestOutside');
-            xlabel('Time (s)');
-            ylabel('Acceleration m/s/s');
-            axis([time(1) time(end) -20 20]);
+                plot(time,ax.*red_line,'b*','MarkerSize',3);
+                plot(time,ay.*red_line,'r*','MarkerSize',3);
+                plot(time,az.*red_line,'k*','MarkerSize',3);
 
-            subplot(4,2,3);
-            hold on;
-            plot(time,ox);
-            plot(time,oy,'r');
-            plot(time,oz,'k');
-            plot(time,rad2deg(alpha),'g');
+                hold off;
+                legend('ax','ay','az','Location','NorthWestOutside');
+                xlabel('Time (s)');
+                ylabel('Acceleration m/s/s');
+                axis([time(1) time(end) -20 20]);
 
-            plot(time,ox.*red_line,'b*','MarkerSize',3);
-            plot(time,oy.*red_line,'r*','MarkerSize',3);
-            plot(time,oz.*red_line,'k*','MarkerSize',3);
-            plot(time,rad2deg(alpha).*red_line,'g*','MarkerSize',3);
-            hold off;
+                subplot(4,2,3);
+                hold on;
+                plot(time,ox);
+                plot(time,oy,'r');
+                plot(time,oz,'k');
+                plot(time,rad2deg(alpha),'g');
 
-            legend('ox','oy','oz','Alpha','Location','NorthWestOutside');
-            xlabel('Time (s)');
-            ylabel('Orientation (deg)');
-            axis([time(1) time(end) -180 180]);
+                plot(time,ox.*red_line,'b*','MarkerSize',3);
+                plot(time,oy.*red_line,'r*','MarkerSize',3);
+                plot(time,oz.*red_line,'k*','MarkerSize',3);
+                plot(time,rad2deg(alpha).*red_line,'g*','MarkerSize',3);
+                hold off;
 
-            subplot(4,2,5);
-            hold on
+                legend('ox','oy','oz','Alpha','Location','NorthWestOutside');
+                xlabel('Time (s)');
+                ylabel('Orientation (deg)');
+                axis([time(1) time(end) -180 180]);
 
-            plot(time,wx,'b');
-            plot(time,wy,'r');
-            plot(time,wz,'k');
+                subplot(4,2,5);
+                hold on
 
-            plot(time,wx.*red_line,'b*','MarkerSize',3);
-            plot(time,wy.*red_line,'r*','MarkerSize',3);
-            plot(time,wz.*red_line,'k*','MarkerSize',3);
+                plot(time,wx,'b');
+                plot(time,wy,'r');
+                plot(time,wz,'k');
 
-            legend('wx','wy','wz','Location','NorthWestOutside');
-            xlabel('Time (s)');
-            ylabel('Omega');
-            hold off
-            axis([time(1) time(end) -300 300]);
+                plot(time,wx.*red_line,'b*','MarkerSize',3);
+                plot(time,wy.*red_line,'r*','MarkerSize',3);
+                plot(time,wz.*red_line,'k*','MarkerSize',3);
 
-            subplot(4,2,7);
-            hold on
-            plot(time,c_drive,'b');
-            plot(time,c_steer,'r');
+                legend('wx','wy','wz','Location','NorthWestOutside');
+                xlabel('Time (s)');
+                ylabel('Omega');
+                hold off
+                axis([time(1) time(end) -300 300]);
 
-            plot(time,c_drive.*red_line,'b*','MarkerSize',3);
-            plot(time,c_steer.*red_line,'r*','MarkerSize',3);
+                subplot(4,2,7);
+                hold on
+                plot(time,c_drive,'b');
+                plot(time,c_steer,'r');
 
-            legend('Drive','Steer','Location','NorthWestOutside');
-            xlabel('Time (s)');
-            ylabel('Command Signal');
-            axis([time(1) time(end) -5 260]);
-            
-            line([time(1),time(end)],[64,64],'Color',[0,0,0]);
-            line([time(1),time(end)],[192,192],'Color',[0,0,0]);
-            hold off
-            
-            %%
-            %figure()
-            subplot(4,2,[2,4])
+                plot(time,c_drive.*red_line,'b*','MarkerSize',3);
+                plot(time,c_steer.*red_line,'r*','MarkerSize',3);
 
-            title_str = sprintf('Time between samples. mean: %f, std: %f', mean(time_diff), std(time_diff));
-            hold on
-            plot(time(2:end),time_diff,'b');
-            plot(time(2:end),time_diff.*red_line(2:end),'b*','MarkerSize',3);
-            hold off
-            %axis([0 length(time_diff) 0 300]);
-            title(title_str);
-            xlabel('Time (s)');
-            ylabel('Time (ms)');
-            axis([time(1) time(end) 0 300]);
-            
-            subplot(4,2,[6,8])
+                legend('Drive','Steer','Location','NorthWestOutside');
+                xlabel('Time (s)');
+                ylabel('Command Signal');
+                axis([time(1) time(end) -5 260]);
 
-            hold on
-            plot(time,m_right);
-            plot(time,m_left,'k');
-            plot(time,m_rear,'m');
-            plot(time, load_nan, 'r', 'LineWidth',4);
-            plot(time, load_nan, 'r*', 'LineWidth',2);
-            hold off
-            legend('Right','Left','Rear','Failure','Location','NorthEastOutside');
-            xlabel('Time (s)');
-            ylabel('Mass');
-            axis([time(1) time(end) -1000 15000]);
-            
-            suptitle([dir_name, all_files(ind).name]);
+                line([time(1),time(end)],[64,64],'Color',[0,0,0]);
+                line([time(1),time(end)],[192,192],'Color',[0,0,0]);
+                hold off
+
+                %%
+                %figure()
+                subplot(4,2,[2,4])
+
+                title_str = sprintf('Time between samples. mean: %f, std: %f', mean(time_diff), std(time_diff));
+                hold on
+                plot(time(2:end),time_diff,'b');
+                plot(time(2:end),time_diff.*red_line(2:end),'b*','MarkerSize',3);
+                hold off
+                %axis([0 length(time_diff) 0 300]);
+                title(title_str);
+                xlabel('Time (s)');
+                ylabel('Time (ms)');
+                axis([time(1) time(end) 0 300]);
+
+                subplot(4,2,[6,8])
+
+                hold on
+                plot(time,m_right);
+                plot(time,m_left,'k');
+                plot(time,m_rear,'m');
+                plot(time, load_nan, 'r', 'LineWidth',4);
+                plot(time, load_nan, 'r*', 'LineWidth',2);
+                hold off
+                legend('Right','Left','Rear','Failure','Location','NorthEastOutside');
+                xlabel('Time (s)');
+                ylabel('Mass');
+                axis([time(1) time(end) -1000 15000]);
+
+                suptitle([dir_name, all_files(ind).name]);
+            end %check to plot
         end
     %%
     end
