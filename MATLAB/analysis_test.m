@@ -20,28 +20,31 @@ ind_load_right = 15;
 ind_load_left = 16;
 ind_load_rear = 17;
 
-%%
+%% Check if data has been read and don't read again (slow)
+% Need to seperate the plotting function from reading
 if ~exist('all_data','var')
     all_data = read_folder('./Test Runs/','data',[ 14 ]);
 end
 
 
-%%
-index = 14;
+%% Choose data and get time information
+index = 14; % Choose which test run (index = {1,2} are directories)
 
 data = all_data{index};
 
-data = data(:,15:end);
+data = data(:,15:end); % Ignore some of the start (set this depending on test to ignore unimportant information)
 
-time = data(ind_time,:)/1000;
-dt = diff(time);
+time = data(ind_time,:)/1000; % Time in seconds
+dt = diff(time); % Effective sampling time
 
-omega_dX = data(ind_gyro_rawX,1:end-1) - data(ind_gyro_rawX,2:end);
-omega_dY = data(ind_gyro_rawY,1:end-1) - data(ind_gyro_rawY,2:end);
-omega_dZ = data(ind_gyro_rawZ,1:end-1) - data(ind_gyro_rawZ,2:end);
+%% Angular acceleration 
+omega_dX = (data(ind_gyro_rawX,2:end) - data(ind_gyro_rawX,1:end-1)).*dt;
+omega_dY = (data(ind_gyro_rawY,2:end) - data(ind_gyro_rawY,1:end-1)).*dt;
+omega_dZ = (data(ind_gyro_rawZ,2:end) - data(ind_gyro_rawZ,1:end-1)).*dt;
 
 %data(ind_az,:) = data(ind_az,:) - 9.81;
 
+% Plot Angular acceleration
 figure()
 hold on
 plot(time(2:end),omega_dX,'b');
@@ -50,20 +53,27 @@ plot(time(2:end),omega_dZ,'k');
 hold off
 title('\dot{\omega}');
 
-vx = data(ind_ax,2:end).*dt;
-vy = data(ind_ay,2:end).*dt;
-vz = (data(ind_az,2:end)- 9.81).*dt;
+%% Velocities
+% vx = data(ind_ax,2:end).*dt;
+% vy = data(ind_ay,2:end).*dt;
+% vz = (data(ind_az,2:end)- 9.81).*dt;
+
+vx = cumtrapz(data(ind_ax,2:end)).*dt;
+vy = cumtrapz(data(ind_ay,2:end)).*dt;
+vz = cumtrapz(data(ind_az,2:end)- 9.81).*dt;
+mag_vs = sqrt(vx.^2 + vy.^2 + vz.^2); % Assume only planar motion
 
 figure()
 hold on
 plot(time(2:end),vx,'b');
 plot(time(2:end),vy,'r');
 plot(time(2:end),vz,'k');
+plot(time(2:end),mag_vs,'m');
 hold off
 title('Velocities');
 
 figure()
-mag_as = (abs(data(ind_ax,:)) + abs(data(ind_ay,:)) + abs(data(ind_az,:)));
+mag_as = sqrt(data(ind_ax,:).^2 + data(ind_ay,:).^2 + (data(ind_az,:)-9.81).^2);
 plot(time, mag_as)
 title('Magnitude of acceleration');
 
@@ -71,19 +81,20 @@ figure()
 plot(time, sum(data([ind_load_left, ind_load_right, ind_load_rear],:)));
 title('Total mass');
 
-%% 
-m_chassis = 14;
+%% Loads
+m_chassis = 13;
 m_load = 5;
 
 m = m_chassis + m_load;
 
-%%
+%% Rough position of CoG and IMU
 r_cog_chassis = [-0.4;0;1.5];
 r_cog_mass = [-0.25;-0.18;0.56];
 
 r_cog = r_cog_chassis*m_chassis/m + r_cog_mass*m_load/m;
 
 r_imu = [-0.325 ; 0.1; 0.25];
+
 %%
 Ixx = 0.85;
 Iyy = 0.97;
@@ -121,8 +132,8 @@ criteria_s = zeros(3,length(data)-1);
 stable_s = zeros(3,length(data)-1);
 
 for ind = 2:length(data)
-    w = deg2rad([data(ind_gyro_rawX,ind); data(ind_gyro_rawY,ind); data(ind_gyro_rawZ,ind)])/17;
-    w_dot = deg2rad([omega_dX(ind-1); omega_dY(ind-1); omega_dZ(ind-1)])/17;
+    w = deg2rad([data(ind_gyro_rawX,ind); data(ind_gyro_rawY,ind); data(ind_gyro_rawZ,ind)])/16.4;
+    w_dot = deg2rad([omega_dX(ind-1); omega_dY(ind-1); omega_dZ(ind-1)])/16.4;
     A = [data(ind_ax,ind); data(ind_ay,ind); data(ind_az,ind)] - cross(w_dot, (r_cog - r_imu));
     %A = [0;0;-9.8];
     R = [1 ,0 , 0; 0, 1, 0; 0, 0, 1];
